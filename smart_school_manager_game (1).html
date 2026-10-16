@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart School Manager: ภารกิจพิชิตโรงเรียนอัจฉริยะ</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts (Prompt & Kanit) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        prompt: ['Prompt', 'sans-serif'],
+                        kanit: ['Kanit', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            blue: '#0284c7',
+                            lightBlue: '#e0f2fe',
+                            teal: '#0d9488',
+                            green: '#16a34a',
+                            lightGreen: '#dcfce7',
+                            orange: '#ea580c',
+                            lightOrange: '#ffedd5',
+                            yellow: '#ca8a04',
+                            purple: '#9333ea',
+                            cardBg: '#ffffff',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            font-family: 'Prompt', sans-serif;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #bae6fd 100%);
+            min-height: 100vh;
+            user-select: none;
+        }
+        
+        .heading-font {
+            font-family: 'Kanit', sans-serif;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #0284c7;
+            border-radius: 4px;
+        }
+
+        /* Flowchart styling */
+        .flow-shape {
+            transition: all 0.2s ease;
+        }
+        .flow-shape:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Animations */
+        @keyframes pulse-subtle {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+        }
+        .animate-pulse-subtle {
+            animation: pulse-subtle 3s infinite;
+        }
+
+        /* Card Hover Effects */
+        .choice-card {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .choice-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px -5px rgba(14, 165, 233, 0.25);
+        }
+        .choice-card.selected {
+            border-color: #0284c7;
+            background-color: #f0f9ff;
+            box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.3);
+        }
+    </style>
+</head>
+<body class="text-slate-800 flex flex-col justify-between min-h-screen">
+
+    <!-- Top Navigation Header / Dashboard Status -->
+    <header id="game-header" class="hidden bg-white/90 backdrop-blur border-b border-sky-200 sticky top-0 z-50 shadow-sm transition-all duration-300">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-3">
+            <!-- Game Title & Day -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-sky-600 text-white flex items-center justify-center font-bold text-xl shadow-md">
+                    <i class="fa-solid fa-school"></i>
+                </div>
+                <div>
+                    <h1 class="heading-font text-lg font-bold text-sky-900 leading-tight">Smart School Manager</h1>
+                    <div class="flex items-center gap-2 text-xs text-sky-700">
+                        <span id="current-day-badge" class="bg-sky-100 text-sky-800 px-2 py-0.5 rounded-full font-semibold">วันที 1 / 4</span>
+                        <span id="current-mission-title">ภารกิจที่ 1: คอมพิวเตอร์ไม่เพียงพอ</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resource Indicators Bar -->
+            <div class="flex items-center gap-2 sm:gap-4 overflow-x-auto py-1">
+                <!-- Budget -->
+                <div class="bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 flex items-center gap-2 min-w-[100px]">
+                    <i class="fa-solid fa-coins text-amber-500 text-lg"></i>
+                    <div>
+                        <div class="text-[10px] text-amber-700 font-semibold uppercase leading-none">งบประมาณ</div>
+                        <div class="text-sm font-bold text-amber-900" id="res-budget">100</div>
+                    </div>
+                </div>
+
+                <!-- Days Left -->
+                <div class="bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5 flex items-center gap-2 min-w-[90px]">
+                    <i class="fa-solid fa-calendar-day text-blue-500 text-lg"></i>
+                    <div>
+                        <div class="text-[10px] text-blue-700 font-semibold uppercase leading-none">เวลาคงเหลือ</div>
+                        <div class="text-sm font-bold text-blue-900"><span id="res-days">4</span> วัน</div>
+                    </div>
+                </div>
+
+                <!-- Computers -->
+                <div class="bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-1.5 flex items-center gap-2 min-w-[100px]">
+                    <i class="fa-solid fa-desktop text-emerald-500 text-lg"></i>
+                    <div>
+                        <div class="text-[10px] text-emerald-700 font-semibold uppercase leading-none">คอมพิวเตอร์</div>
+                        <div class="text-sm font-bold text-emerald-900"><span id="res-computers">20</span>/20</div>
+                    </div>
+                </div>
+
+                <!-- Students -->
+                <div class="bg-purple-50 border border-purple-200 rounded-lg px-3 py-1.5 flex items-center gap-2 min-w-[90px]">
+                    <i class="fa-solid fa-user-graduate text-purple-500 text-lg"></i>
+                    <div>
+                        <div class="text-[10px] text-purple-700 font-semibold uppercase leading-none">นักเรียน</div>
+                        <div class="text-sm font-bold text-purple-900"><span id="res-students">30</span> คน</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-5xl mx-auto px-4 py-6 flex-grow w-full flex flex-col justify-center">
+
+        <!-- ================= PAGE 1: START SCREEN ================= -->
+        <section id="page-start" class="space-y-6 text-center my-auto">
+            <div class="bg-white/90 backdrop-blur rounded-3xl p-6 md:p-10 shadow-xl border border-sky-100 max-w-3xl mx-auto space-y-6">
+                <!-- Avatar & Banner -->
+                <div class="relative inline-block">
+                    <div class="w-28 h-28 md:w-36 md:w-36 mx-auto bg-gradient-to-tr from-sky-400 to-teal-300 rounded-full flex items-center justify-center shadow-lg p-2">
+                        <div class="w-full h-full bg-white rounded-full flex items-center justify-center overflow-hidden">
+                            <i class="fa-solid fa-user-gear text-5xl md:text-6xl text-sky-600"></i>
+                        </div>
+                    </div>
+                    <span class="absolute bottom-1 right-1 bg-amber-400 text-white text-xs px-2 py-1 rounded-full font-bold shadow">
+                        <i class="fa-solid fa-star mr-1"></i> ผอ. มือใหม่
+                    </span>
+                </div>
+
+                <div>
+                    <span class="bg-sky-100 text-sky-800 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider">วิชาวิทยาการคำนวณ ป.6</span>
+                    <h1 class="heading-font text-3xl md:text-5xl font-extrabold text-sky-950 mt-2 mb-3">
+                        Smart School Manager
+                    </h1>
+                    <p class="text-xl font-medium text-sky-600 heading-font">ภารกิจพิชิตโรงเรียนอัจฉริยะ</p>
+                </div>
+
+                <p class="text-slate-600 text-sm md:text-base max-w-xl mx-auto leading-relaxed">
+                    สวมบทบาทเป็นผู้จัดการโรงเรียนอัจฉริยะ นำทักษะ <strong class="text-sky-700">อัลกอริทึม ผังงาน และการคิดเชิงเงื่อนไข</strong> มาใช้บริหารจัดการแก้ปัญหาในโรงเรียนที่มีทรัพยากรจำกัด!
+                </p>
+
+                <!-- Learning Goals Box -->
+                <div class="bg-sky-50 border border-sky-200 rounded-2xl p-4 text-left max-w-lg mx-auto text-xs md:text-sm text-sky-900 space-y-2">
+                    <div class="font-bold flex items-center gap-2 text-sky-800">
+                        <i class="fa-solid fa-bullseye text-sky-600"></i> สิ่งที่คุณจะได้เรียนรู้จากภารกิจนี้:
+                    </div>
+                    <ul class="list-disc list-inside space-y-1 text-slate-700 pl-1">
+                        <li>เข้าใจการวางลำดับขั้นตอน (Algorithm) ในชีวิตจริง</li>
+                        <li>ฝึกอ่านและเขียนผังงาน (Flowchart) เบื้องต้น</li>
+                        <li>ตัดสินใจโดยใช้เงื่อนไข (If-Else) และประเมินผลกระทบ</li>
+                    </ul>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-col sm:flex-row gap-4 justify-center pt-2">
+                    <button onclick="startGame()" class="bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white heading-font font-bold text-lg px-8 py-3.5 rounded-2xl shadow-lg shadow-emerald-500/30 transition-all duration-200 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-play"></i> เริ่มเกมเลย!
+                    </button>
+                    <button onclick="openHowToModal()" class="bg-sky-100 hover:bg-sky-200 text-sky-800 font-bold text-base px-6 py-3.5 rounded-2xl transition-all duration-200 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-circle-info"></i> วิธีการเล่น
+                    </button>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ================= PAGE 2: MISSION INTRO ================= -->
+        <section id="page-scenario" class="hidden space-y-6 max-w-3xl mx-auto">
+            <div class="bg-white rounded-3xl p-6 md:p-8 shadow-xl border border-sky-100 space-y-6">
+                <!-- Mission Header -->
+                <div class="flex items-center gap-3 border-b border-slate-100 pb-4">
+                    <div id="mission-icon-bg" class="w-12 h-12 rounded-2xl bg-sky-100 text-sky-600 flex items-center justify-center text-2xl font-bold">
+                        <i id="mission-icon" class="fa-solid fa-desktop"></i>
+                    </div>
+                    <div>
+                        <span id="mission-step-tag" class="text-xs font-bold text-sky-600 uppercase tracking-wider">ภารกิจที่ 1 จาก 4</span>
+                        <h2 id="mission-title" class="heading-font text-2xl font-bold text-slate-800">ปัญหาคอมพิวเตอร์ไม่เพียงพอ</h2>
+                    </div>
+                </div>
+
+                <!-- Situation Description -->
+                <div class="space-y-4">
+                    <h3 class="text-sm font-bold text-slate-500 uppercase tracking-wider">สถานการณ์ปัจจุบัน</h3>
+                    <div id="mission-description" class="bg-slate-50 rounded-2xl p-5 border border-slate-200/80 text-slate-700 leading-relaxed space-y-2">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Key Data Display -->
+                <div class="bg-amber-50 border border-amber-200/80 rounded-2xl p-4">
+                    <h4 class="text-xs font-bold text-amber-800 uppercase mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-triangle-exclamation text-amber-600"></i> ข้อมูลที่ต้องวิเคราะห์:
+                    </h4>
+                    <div id="mission-data-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-slate-700">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Mini Activity / Quiz Intro Badge -->
+                <div class="bg-indigo-50 border border-indigo-200 rounded-2xl p-4 flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-lg flex-shrink-0">
+                        <i class="fa-solid fa-brain"></i>
+                    </div>
+                    <div class="text-xs md:text-sm text-indigo-900">
+                        <span class="font-bold">ภารกิจนี้มีมินิเกมอัลกอริทึม!</span> 
+                        <p class="text-slate-600">แก้ปัญหาเพื่อสะสมคะแนนการเรียนรู้และปลดล็อกตัวช่วยการบริหาร</p>
+                    </div>
+                </div>
+
+                <!-- Continue Button -->
+                <div class="pt-2 flex justify-end">
+                    <button onclick="goToDecisionPage()" class="w-full sm:w-auto bg-sky-600 hover:bg-sky-700 active:scale-95 text-white heading-font font-bold px-8 py-3.5 rounded-2xl shadow-lg shadow-sky-600/30 transition-all flex items-center justify-center gap-2">
+                        ไปที่จุดตัดสินใจ <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ================= PAGE 3: DECISION & MINI-GAME ================= -->
+        <section id="page-decision" class="hidden space-y-6 max-w-4xl mx-auto">
+            
+            <!-- Step 1: Mini Learning Activity (Algorithm Quiz/Flowchart) -->
+            <div id="mini-game-card" class="bg-white rounded-3xl p-6 md:p-8 shadow-xl border border-indigo-100 space-y-5">
+                <div class="flex items-center justify-between border-b border-indigo-50 pb-3">
+                    <div class="flex items-center gap-2 text-indigo-900 font-bold heading-font text-lg">
+                        <i class="fa-solid fa-puzzle-piece text-indigo-600"></i> 
+                        <span id="minigame-title">กิจกรรมการเรียนรู้: อัลกอริทึมและผังงาน</span>
+                    </div>
+                    <span class="text-xs bg-indigo-100 text-indigo-800 font-bold px-3 py-1 rounded-full">
+                        คะแนนสะสม: <span id="current-score-display">0</span>/100
+                    </span>
+                </div>
+
+                <div id="minigame-question-container" class="space-y-4">
+                    <!-- Populated dynamically via JS -->
+                </div>
+
+                <div id="minigame-feedback" class="hidden p-4 rounded-2xl text-sm font-medium"></div>
+            </div>
+
+            <!-- Step 2: Management Decision Card -->
+            <div id="management-decision-card" class="bg-white rounded-3xl p-6 md:p-8 shadow-xl border border-sky-100 space-y-6">
+                <div>
+                    <span class="text-xs font-bold text-sky-600 uppercase tracking-wider">การตัดสินใจบริหารจัดการ</span>
+                    <h3 id="decision-prompt-title" class="heading-font text-xl font-bold text-slate-800 mt-1">คุณจะเลือกแก้ปัญหานี้อย่างไร?</h3>
+                    <p class="text-xs text-slate-500">โปรดพิจารณาผลกระทบต่อ งบประมาณ เวลา คอมพิวเตอร์ และความพึงพอใจ</p>
+                </div>
+
+                <!-- Options List -->
+                <div id="choices-container" class="grid grid-cols-1 gap-4">
+                    <!-- Populated dynamically by JS -->
+                </div>
+
+                <!-- Confirm Choice Button -->
+                <div class="pt-4 flex justify-between items-center">
+                    <div class="text-xs text-slate-400">
+                        <i class="fa-solid fa-lock text-slate-300 mr-1"></i> เลือกระบบได้ 1 ทางเลือกเท่านั้น
+                    </div>
+                    <button id="btn-confirm-choice" onclick="confirmDecision()" disabled class="bg-slate-300 text-slate-50 cursor-not-allowed heading-font font-bold text-base px-8 py-3.5 rounded-2xl transition-all flex items-center gap-2">
+                        ยืนยันการตัดสินใจ <i class="fa-solid fa-check-circle"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ================= PAGE 4: RESULT & EDUCATIONAL FEEDBACK ================= -->
+        <section id="page-feedback" class="hidden space-y-6 max-w-3xl mx-auto">
+            <div class="bg-white rounded-3xl p-6 md:p-8 shadow-xl border border-sky-100 space-y-6">
+                <!-- Status Badge -->
+                <div class="flex items-center gap-3">
+                    <div id="result-status-icon" class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-2xl font-bold">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                    <div>
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">ผลลัพธ์การตัดสินใจ</span>
+                        <h2 id="result-title" class="heading-font text-2xl font-bold text-slate-800">แผนการดำเนินงานสำเร็จ!</h2>
+                    </div>
+                </div>
+
+                <!-- Story Result Narrative -->
+                <div class="bg-slate-50 rounded-2xl p-5 border border-slate-200 text-slate-700 leading-relaxed space-y-3">
+                    <h4 class="font-bold text-slate-800 text-sm">เหตุการณ์ที่เกิดขึ้น:</h4>
+                    <p id="result-story-text" class="text-sm md:text-base">...</p>
+                </div>
+
+                <!-- Resource Changes Summary -->
+                <div class="bg-sky-50 border border-sky-200/80 rounded-2xl p-4">
+                    <h4 class="text-xs font-bold text-sky-800 uppercase mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-sliders text-sky-600"></i> การเปลี่ยนแปลงของทรัพยากร:
+                    </h4>
+                    <div id="resource-changes-list" class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Learning Insight / Algorithm Explanation -->
+                <div class="bg-amber-50 border border-amber-200 rounded-2xl p-5 space-y-2">
+                    <div class="flex items-center gap-2 text-amber-900 font-bold text-sm">
+                        <i class="fa-solid fa-lightbulb text-amber-600 text-lg"></i>
+                        <span>เชื่อมโยงความรู้วิทยาการคำนวณ:</span>
+                    </div>
+                    <p id="educational-concept-text" class="text-xs md:text-sm text-amber-950 leading-relaxed">
+                        <!-- Populated by JS -->
+                    </p>
+                </div>
+
+                <!-- Next Button -->
+                <div class="pt-2 flex justify-end">
+                    <button onclick="nextMission()" class="w-full sm:w-auto bg-sky-600 hover:bg-sky-700 active:scale-95 text-white heading-font font-bold px-8 py-3.5 rounded-2xl shadow-lg shadow-sky-600/30 transition-all flex items-center justify-center gap-2">
+                        <span id="btn-next-text">ไปภารกิจถัดไป</span> <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ================= PAGE 5: SUMMARY & REFLECTION ================= -->
+        <section id="page-summary" class="hidden space-y-6 max-w-4xl mx-auto my-auto">
+            <div class="bg-white rounded-3xl p-6 md:p-10 shadow-xl border border-sky-100 space-y-8">
+                <!-- Summary Title -->
+                <div class="text-center space-y-2">
+                    <div class="inline-block p-3 bg-emerald-100 text-emerald-600 rounded-full mb-2">
+                        <i class="fa-solid fa-trophy text-4xl"></i>
+                    </div>
+                    <h2 class="heading-font text-3xl md:text-4xl font-extrabold text-slate-800">
+                        สรุปผลงานผู้จัดการโรงเรียนอัจฉริยะ
+                    </h2>
+                    <p class="text-slate-500 text-sm">คุณบริหารจัดการโรงเรียนครบทั้ง 4 วันสำเร็จเรียบร้อยแล้ว!</p>
+                </div>
+
+                <!-- Score Dashboard & Stats Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    
+                    <!-- Learning Score Card (Out of 100) -->
+                    <div class="bg-gradient-to-br from-sky-500 to-indigo-600 text-white rounded-3xl p-6 shadow-lg flex flex-col justify-between space-y-4">
+                        <div>
+                            <span class="text-xs font-bold text-sky-100 uppercase tracking-wider">คะแนนการเรียนรู้ (Learning Score)</span>
+                            <div class="flex items-baseline gap-2 mt-2">
+                                <span id="final-learning-score" class="heading-font text-6xl font-extrabold">0</span>
+                                <span class="text-xl text-sky-200">/ 100 คะแนน</span>
+                            </div>
+                        </div>
+
+                        <!-- Breakdown -->
+                        <div class="space-y-2 bg-white/10 rounded-2xl p-4 text-xs">
+                            <div class="flex justify-between">
+                                <span>1. อัลกอริทึมและการเรียงลำดับ:</span>
+                                <span id="score-part-1" class="font-bold">0 / 25</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>2. การอ่านและวิเคราะห์ผังงาน:</span>
+                                <span id="score-part-2" class="font-bold">0 / 25</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>3. เงื่อนไขและการแก้ปัญหา:</span>
+                                <span id="score-part-3" class="font-bold">0 / 30</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>4. เหตุผลและการสะท้อนคิด:</span>
+                                <span id="score-part-4" class="font-bold">0 / 20</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Final Management Resources Card -->
+                    <div class="bg-slate-50 border border-slate-200 rounded-3xl p-6 space-y-4 flex flex-col justify-between">
+                        <div>
+                            <h3 class="heading-font text-lg font-bold text-slate-800 border-b pb-2">ทรัพยากรการบริหารคงเหลือ</h3>
+                            <div class="grid grid-cols-2 gap-3 mt-4">
+                                <div class="bg-white p-3 rounded-2xl border border-slate-100 text-center">
+                                    <span class="text-xs text-slate-400 block">งบประมาณ</span>
+                                    <span id="final-res-budget" class="text-xl font-bold text-amber-600">100</span>
+                                </div>
+                                <div class="bg-white p-3 rounded-2xl border border-slate-100 text-center">
+                                    <span class="text-xs text-slate-400 block">คอมพิวเตอร์พร้อมใช้</span>
+                                    <span id="final-res-computers" class="text-xl font-bold text-emerald-600">20/20</span>
+                                </div>
+                                <div class="bg-white p-3 rounded-2xl border border-slate-100 text-center">
+                                    <span class="text-xs text-slate-400 block">นักเรียน</span>
+                                    <span id="final-res-students" class="text-xl font-bold text-purple-600">30 คน</span>
+                                </div>
+                                <div class="bg-white p-3 rounded-2xl border border-slate-100 text-center">
+                                    <span class="text-xs text-slate-400 block">เวลาที่ใช้</span>
+                                    <span id="final-res-days" class="text-xl font-bold text-blue-600">4 วัน</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Management Performance Evaluation -->
+                        <div id="final-eval-box" class="p-3.5 rounded-2xl bg-sky-50 border border-sky-200 text-xs text-sky-900">
+                            <strong>ประเมินสไตล์บริหาร:</strong> <span id="final-style-text">ผู้จัดการสายวิเคราะห์ระบบ</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reflection Questions Section (5 Questions) -->
+                <div class="bg-slate-50 rounded-3xl p-6 border border-slate-200/80 space-y-4">
+                    <div class="flex items-center gap-2 text-slate-800 font-bold heading-font text-lg">
+                        <i class="fa-solid fa-comments text-sky-600"></i> คำถามสะท้อนคิดหลังการเล่นเกม (Reflection)
+                    </div>
+                    <p class="text-xs text-slate-500">ตอบคำถาม 5 ข้อนี้สั้นๆ เพื่อรับคะแนนสะสมหมวดการให้เหตุผล (20 คะแนน)</p>
+
+                    <div id="reflection-form" class="space-y-4 text-sm text-slate-700">
+                        <div>
+                            <label class="block font-medium mb-1">1. ทำไมการเรียงลำดับขั้นตอน (Algorithm) จึงสำคัญต่อการแก้ปัญหาในโรงเรียน?</label>
+                            <textarea id="ref-q1" rows="2" class="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:outline-none text-xs md:text-sm" placeholder="พิมพ์คำตอบของคุณที่นี่..."></textarea>
+                        </div>
+                        <div>
+                            <label class="block font-medium mb-1">2. สัญลักษณ์ผังงาน (Flowchart) ช่วยให้คุณเข้าใจขั้นตอนการแก้ปัญหาตารางซ้ำซ้อนได้อย่างไร?</label>
+                            <textarea id="ref-q2" rows="2" class="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:outline-none text-xs md:text-sm" placeholder="พิมพ์คำตอบของคุณที่นี่..."></textarea>
+                        </div>
+                        <div>
+                            <label class="block font-medium mb-1">3. หากคอมพิวเตอร์ขัดข้องเพิ่มขึ้นอีก 5 เครื่อง คุณจะปรับเปลี่ยนอัลกอริทึมรับมืออย่างไร?</label>
+                            <textarea id="ref-q3" rows="2" class="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:outline-none text-xs md:text-sm" placeholder="พิมพ์คำตอบของคุณที่นี่..."></textarea>
+                        </div>
+                        <div>
+                            <label class="block font-medium mb-1">4. การตัดสินใจครั้งใดที่คุณคิดว่าประสบผลสำเร็จที่สุด เพราะเหตุใด?</label>
+                            <textarea id="ref-q4" rows="2" class="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:outline-none text-xs md:text-sm" placeholder="พิมพ์คำตอบของคุณที่นี่..."></textarea>
+                        </div>
+                        <div>
+                            <label class="block font-medium mb-1">5. หากให้เริ่มเล่นใหม่อีกครั้ง คุณจะเลือกเปลี่ยนทางเลือกในภารกิจไหน เพราะอะไร?</label>
+                            <textarea id="ref-q5" rows="2" class="w-full p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-sky-500 focus:outline-none text-xs md:text-sm" placeholder="พิมพ์คำตอบของคุณที่นี่..."></textarea>
+                        </div>
+                    </div>
+
+                    <button id="btn-submit-reflection" onclick="submitReflection()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition">
+                        บันทึกคำตอบสะท้อนคิด (+20 คะแนน)
+                    </button>
+                    <div id="reflection-submitted-msg" class="hidden p-3 bg-emerald-100 text-emerald-800 text-center rounded-xl text-sm font-bold">
+                        <i class="fa-solid fa-check-circle mr-1"></i> บันทึกคำตอบและคำนวณคะแนนสะท้อนคิดเรียบร้อยแล้ว!
+                    </div>
+                </div>
+
+                <!-- Final Restart Action -->
+                <div class="flex justify-center pt-2">
+                    <button onclick="restartGame()" class="bg-sky-600 hover:bg-sky-700 active:scale-95 text-white heading-font font-bold text-lg px-8 py-3.5 rounded-2xl shadow-lg transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-rotate-right"></i> เล่นใหม่อีกครั้ง
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-4 text-center text-xs text-sky-800/60 font-medium">
+        สื่อการเรียนรู้แบบปฏิสัมพันธ์ วิชาวิทยาการคำนวณ ชั้นประถมศึกษาปีที่ 6
+    </footer>
+
+
+    <!-- ================= HOW TO PLAY MODAL ================= -->
+    <div id="modal-howto" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 space-y-5 shadow-2xl relative animate-fade-in">
+            <button onclick="closeHowToModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 w-8 h-8 rounded-full flex items-center justify-center bg-slate-100">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="flex items-center gap-3 border-b pb-3">
+                <div class="w-10 h-10 rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-gamepad"></i>
+                </div>
+                <h3 class="heading-font text-xl font-bold text-slate-800">วิธีการเล่นเกม</h3>
+            </div>
+
+            <div class="space-y-3 text-xs md:text-sm text-slate-600 max-h-[60vh] overflow-y-auto pr-1">
+                <div class="flex gap-3">
+                    <span class="w-6 h-6 rounded-full bg-sky-600 text-white font-bold flex items-center justify-center flex-shrink-0 text-xs">1</span>
+                    <p>คุณมี <strong class="text-sky-700">4 ภารกิจหลัก</strong> ในการบริหารจัดการโรงเรียนอัจฉริยะ แต่ละภารกิจจะพบปัญหาที่แตกต่างกัน</p>
+                </div>
+                <div class="flex gap-3">
+                    <span class="w-6 h-6 rounded-full bg-sky-600 text-white font-bold flex items-center justify-center flex-shrink-0 text-xs">2</span>
+                    <p>ก่อนตัดสินใจ คุณจะได้รับ <strong class="text-sky-700">มินิเกมกิจกรรมวิทยาการคำนวณ</strong> (เรียงลำดับ/ผังงาน/เงื่อนไข) เพื่อเก็บคะแนนการเรียนรู้เต็ม 100 คะแนน</p>
+                </div>
+                <div class="flex gap-3">
+                    <span class="w-6 h-6 rounded-full bg-sky-600 text-white font-bold flex items-center justify-center flex-shrink-0 text-xs">3</span>
+                    <p>เลือกทางเลือกบริหาร 3 ทางเลือกในแต่ละภารกิจ การตัดสินใจในจุดก่อนหน้าจะ <strong class="text-sky-700">ส่งผลต่อสถานการณ์ถัดไป (Branching System)</strong></p>
+                </div>
+                <div class="flex gap-3">
+                    <span class="w-6 h-6 rounded-full bg-sky-600 text-white font-bold flex items-center justify-center flex-shrink-0 text-xs">4</span>
+                    <p>คอยดูแล <strong class="text-sky-700">งบประมาณ คอมพิวเตอร์ และเวลา</strong> ไม่ให้หมดลงก่อนกำหนด!</p>
+                </div>
+            </div>
+
+            <div class="pt-2">
+                <button onclick="closeHowToModal()" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-bold py-3 rounded-2xl">
+                    เข้าใจแล้ว เริ่มเล่นเกม
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ================= GAME LOGIC ENGINE (JAVASCRIPT) ================= -->
+    <script>
+        /* ================= GAME STATE SYSTEM ================= */
+        const initialGameState = {
+            currentMissionIndex: 0, // 0, 1, 2, 3
+            resources: {
+                budget: 100,
+                days: 4,
+                computers: 20,
+                students: 30
+            },
+            scores: {
+                algorithm: 0,   // Max 25 (Mission 1)
+                flowchart: 0,   // Max 25 (Mission 2)
+                condition: 0,   // Max 30 (Mission 3 & 4)
+                reflection: 0   // Max 20 (End Game Qs)
+            },
+            choicesHistory: [], // Stores user choices A, B, or C for each step
+            minigameCompleted: false,
+            selectedChoiceIndex: null,
+            reflectionSubmitted: false
+        };
+
+        let gameState = JSON.parse(JSON.stringify(initialGameState));
+
+        /* ================= MISSIONS & BRANCHING DATA ================= */
+        const missionsData = [
+            /* MISSION 1 */
+            {
+                id: 1,
+                title: "คอมพิวเตอร์ไม่เพียงพอ",
+                icon: "fa-desktop",
+                iconBg: "bg-sky-100 text-sky-600",
+                description: "ต้อนรับเปิดเทอมวันแรก! นักเรียนชั้น ป.6 จำนวน 30 คน เข้าเรียนวิชาวิทยาการคำนวณ แต่ในห้องปฏิบัติการมีคอมพิวเตอร์ที่พร้อมใช้งานเพียง 20 เครื่อง หากให้นั่งแออัดอาจเรียนได้ไม่ทั่วถึง!",
+                dataPoints: [
+                    "จำนวนนักเรียน: 30 คน",
+                    "คอมพิวเตอร์ใช้งานได้: 20 เครื่อง",
+                    "ขาดแคลนคอมพิวเตอร์: 10 เครื่อง",
+                    "งบประมาณเริ่มต้น: 100 คะแนน"
+                ],
+                minigame: {
+                    type: "order",
+                    title: "การเรียงลำดับขั้นตอนแก้ปัญหา (Algorithm)",
+                    instruction: "ให้นักเรียนเรียงลำดับขั้นตอนการจัดกลุ่มเรียนรู้ตามลำดับที่ถูกต้อง (คลิกตามลำดับ 1-2-3):",
+                    items: [
+                        { id: 1, text: "ตรวจสอบจำนวนนักเรียนและคอมพิวเตอร์ที่มี" },
+                        { id: 2, text: "แบ่งกลุ่มนักเรียนให้เหมาะสมกับอุปกรณ์" },
+                        { id: 3, text: "เริ่มทำกิจกรรมเรียนรู้ตามแผน" }
+                    ],
+                    correctOrder: [1, 2, 3],
+                    explanation: "อัลกอริทึมการแก้ปัญหาที่ดี ต้องเริ่มจากการ 'วิเคราะห์ข้อมูลก่อน' -> แล้วจึง 'วางแผนแบ่งกลุ่ม' -> จากนั้นจึง 'ลงมือปฏิบัติ'"
+                },
+                choices: [
+                    {
+                        code: "A",
+                        title: "ทางเลือก A: แบ่งนักเรียนเป็น 2 รอบ",
+                        desc: "แบ่งนักเรียนเป็นกลุ่มละ 15 คน สลับกันเข้าใช้งานคอมพิวเตอร์ทีละรอบ",
+                        cost: 0,
+                        timeCost: 1,
+                        compCost: 0,
+                        story: "การแบ่งเป็น 2 รอบทำให้นักเรียนทุกคนได้ใช้อุปกรณ์เดี่ยว 100% แต่ต้องใช้เวลาในเกมเพิ่มขึ้น 1 วันเนื่องจากสอนซ้ำ 2 รอบ!",
+                        concept: "อัลกอริทึมแบบลำดับซ้ำ (Iteration): การทำงานวนซ้ำกระบวนการเดิมกับนักเรียนกลุ่มที่สอง"
+                    },
+                    {
+                        code: "B",
+                        title: "ทางเลือก B: ให้นักเรียนจับคู่ทำงาน (Pair Programming)",
+                        desc: "จัดให้นักเรียนนั่งจับคู่ 2 คนต่อคอมพิวเตอร์ 1 เครื่อง (ใช้ 15 เครื่อง)",
+                        cost: 0,
+                        timeCost: 0,
+                        compCost: 0,
+                        story: "นักเรียนจับคู่ช่วยกันคิดแบบ Pair Programming ได้ผลดีมาก ไม่เสียเวลาเพิ่ม และเหลือคอมพิวเตอร์สำรอง 5 เครื่อง!",
+                        concept: "การคิดเชิงคำนวณ - การย่อยปัญหา (Decomposition): ช่วยกันแบ่งหน้าที่ในการป้อนคำสั่งและตรวจทาน"
+                    },
+                    {
+                        code: "C",
+                        title: "ทางเลือก C: จัดกิจกรรมแบบผสม (คอมพิวเตอร์ + ใบงาน Unplugged)",
+                        desc: "สลับกลุ่มทำใบงานอัลกอริทึมและใช้คอมพิวเตอร์พร้อมกัน",
+                        cost: 10,
+                        timeCost: 0,
+                        compCost: 0,
+                        story: "จัดกิจกรรมผสมได้ราบรื่น แต่ต้องใช้งบประมาณ 10 คะแนนในการจัดพิมพ์ใบงานและสื่อ Unplugged สำรองไว้",
+                        concept: "การออกแบบกิจกรรมสำรอง (Fallback Plan) ในระบบอัลกอริทึม"
+                    }
+                ]
+            },
+
+            /* MISSION 2 */
+            {
+                id: 2,
+                title: "ตารางเรียนซ้ำซ้อน",
+                icon: "fa-calendar-xmark",
+                iconBg: "bg-amber-100 text-amber-600",
+                description: "เกิดความผิดพลาดในระบบตารางสอน! คุณครู ป.5 และ ป.6 จองใช้ห้องปฏิบัติการคอมพิวเตอร์ตรงกันในคาบเรียนที่ 3 ส่งผลให้มีนักเรียนกว่า 60 คนมาแออัดหน้าห้อง!",
+                getDynamicData: function(state) {
+                    const prevChoice = state.choicesHistory[0];
+                    let hint = "ผลจากการเลือกภารกิจที่แล้ว: ";
+                    if (prevChoice === 'A') hint += "คุณเสียเวลาไป 1 วัน ทำให้ต้องเร่งจัดตารางอย่างรวดเร็ว";
+                    else if (prevChoice === 'B') hint += "คุณมีคอมพิวเตอร์สำรอง ยืดหยุ่นได้ดี";
+                    else hint += "คุณมีสื่อ Unplugged พร้อมใช้งาน";
+                    return [
+                        "ปัญหา: คาบเรียนซ้ำซ้อน 2 ห้องพร้อมกัน",
+                        "คอมพิวเตอร์ที่มี: " + state.resources.computers + " เครื่อง",
+                        hint
+                    ];
+                },
+                minigame: {
+                    type: "flowchart_read",
+                    title: "การอ่านและวิเคราะห์ผังงาน (Flowchart)",
+                    instruction: "พิจารณาสัญลักษณ์ผังงานการจัดตารางด้านล่าง แล้วตอบคำถาม:",
+                    flowchartDiagram: `
+                        <div class="flex flex-col items-center gap-2 my-2 text-xs font-semibold">
+                            <div class="bg-emerald-500 text-white px-4 py-1.5 rounded-full shadow">เริ่มต้น</div>
+                            <i class="fa-solid fa-arrow-down text-slate-400"></i>
+                            <div class="bg-blue-100 border border-blue-400 text-blue-900 px-3 py-1.5 rounded-lg">ตรวจสอบเวลาตารางเรียน</div>
+                            <i class="fa-solid fa-arrow-down text-slate-400"></i>
+                            <div class="bg-amber-100 border-2 border-amber-400 text-amber-900 px-3 py-2 rotate-0 transform rounded-lg text-center shadow-sm">
+                                เกิดการจองซ้ำซ้อนหรือไม่? (Condition)
+                            </div>
+                            <div class="flex gap-8 my-1">
+                                <span class="text-emerald-600 font-bold">ใช่ (Yes)</span>
+                                <span class="text-rose-600 font-bold">ไม่ (No)</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 w-full max-w-xs">
+                                <div class="bg-rose-100 border border-rose-300 text-rose-800 p-2 rounded text-center">ใช้อัลกอริทึมสลับคาบเรียน</div>
+                                <div class="bg-emerald-100 border border-emerald-300 text-emerald-800 p-2 rounded text-center">เข้าเรียนตามปกติ</div>
+                            </div>
+                            <i class="fa-solid fa-arrow-down text-slate-400"></i>
+                            <div class="bg-emerald-500 text-white px-4 py-1.5 rounded-full shadow">สิ้นสุด</div>
+                        </div>
+                    `,
+                    question: "สัญลักษณ์รูปสี่เหลี่ยมข้าวหลามตัด (Decision Symbol) ในผังงาน ทำหน้าที่อะไร?",
+                    options: [
+                        "รับข้อมูลทางคีย์บอร์ด",
+                        "ตัดสินใจและตรวจสอบเงื่อนไข (Yes/No)",
+                        "แสดงจุดเริ่มต้นของการทำงาน"
+                    ],
+                    correctIndex: 1,
+                    explanation: "สี่เหลี่ยมข้าวหลามตัดใช้แสดง 'จุดตัดสินใจหรือเงื่อนไข' ในผังงาน โดยจะมีเส้นทางออกอย่างน้อย 2 ทาง (ใช่ / ไม่ใช่)"
+                },
+                choices: [
+                    {
+                        code: "A",
+                        title: "ทางเลือก A: สร้างอัลกอริทึมตรวจสอบและจัดตารางใหม่",
+                        desc: "ใช้งบประมาณ 15 คะแนนในการปรับระบบตารางสอนอัจฉริยะแบบอัตโนมัติ",
+                        cost: 15,
+                        timeCost: 0,
+                        compCost: 0,
+                        story: "การติดตั้งระบบอัลกอริทึมจัดตารางช่วยแก้ปัญหาซ้ำซ้อนได้อย่างถาวรและแม่นยำ!",
+                        concept: "การแก้ปัญหาด้วยอัลกอริทึมระบบอัตโนมัติ (Automated Scheduling Algorithm)"
+                    },
+                    {
+                        code: "B",
+                        title: "ทางเลือก B: สลับห้องและสลับฐานกิจกรรมเรียนรู้",
+                        desc: "ย้าย 1 ชั้นเรียนไปทำกิจกรรมวิทยาการคำนวณแบบ Unplugged ในห้องจริยธรรม",
+                        cost: 0,
+                        timeCost: 0,
+                        compCost: 0,
+                        story: "การแก้ปัญหาเฉพาะหน้าด้วยการสลับฐานกิจกรรมได้ผลดี นักเรียนทั้งสองชั้นได้เรียนรู้อย่างสมบูรณ์!",
+                        concept: "อัลกอริทึมทางเลือกสลับเปลี่ยน (Alternative Branching Logic)"
+                    },
+                    {
+                        code: "C",
+                        title: "ทางเลือก C: คงตารางเดิมและเปิดห้องให้เรียนพร้อมกัน",
+                        desc: "ให้นักเรียนทั้งสองชั้นอัดแน่นในห้องคอมพิวเตอร์ห้องเดียว",
+                        cost: 0,
+                        timeCost: 1,
+                        compCost: 0,
+                        story: "เกิดความแออัดอย่างมาก ส่งผลให้ระบบเครือข่ายช้าและเกิดความล่าช้าไป 1 วัน!",
+                        concept: "ข้อจำกัดของระบบเมื่อทรัพยากรเกินขีดความสามารถ (Resource Bottleneck)"
+                    }
+                ]
+            },
+
+            /* MISSION 3 */
+            {
+                id: 3,
+                title: "คอมพิวเตอร์ขัดข้อง!",
+                icon: "fa-triangle-exclamation",
+                iconBg: "bg-rose-100 text-rose-600",
+                description: "เกิดเหตุไม่คาดคิด! ขณะนักเรียนกำลังฝึกเขียนโปรแกรม เกิดกระแสไฟฟ้าตก ส่งผลให้คอมพิวเตอร์เสียหายชำรุดทันที 5 เครื่อง!",
+                getDynamicData: function(state) {
+                    const currentComps = state.resources.computers - 5;
+                    return [
+                        "เครื่องชำรุด: -5 เครื่อง",
+                        "คอมพิวเตอร์เหลือพร้อมใช้: " + Math.max(0, currentComps) + " เครื่อง",
+                        "งบประมาณคงเหลือ: " + state.resources.budget + " คะแนน"
+                    ];
+                },
+                minigame: {
+                    type: "condition_if",
+                    title: "การคิดเชิงเงื่อนไข (If-Else Logic)",
+                    instruction: "พิจารณาคำสั่งเงื่อนไขการแก้ปัญหาเครื่องเสีย แล้วตอบคำถามให้ถูกต้อง:",
+                    codeSnippet: `
+<strong class="text-indigo-600">ถ้า (IF)</strong> งบประมาณซ่อมแซม >= 20 คะแนน <strong class="text-indigo-600">แล้ว (THEN)</strong>
+    อนุมัติให้ช่างเข้าซ่อมคอมพิวเตอร์ทันที
+<strong class="text-indigo-600">มิฉะนั้น (ELSE)</strong>
+    ปรับแผนไปใช้ใบงานผังงาน (Unplugged) แทน
+                    `,
+                    question: "หากปัจจุบันคุณเหลืองบประมาณเพียง 15 คะแนน ระบบเงื่อนไขข้างต้นจะเลือกปฏิบัติตามข้อใด?",
+                    options: [
+                        "อนุมัติให้ช่างเข้าซ่อมคอมพิวเตอร์ทันที",
+                        "ปรับแผนไปใช้ใบงานผังงาน (Unplugged) แทน",
+                        "หยุดการเรียนการสอนทันที"
+                    ],
+                    correctIndex: 1,
+                    explanation: "เนื่องจากเงื่อนไข 15 >= 20 เป็น 'เท็จ (False)' โปรแกรมจึงข้ามไปทำงานในส่วนของ 'มิฉะนั้น (ELSE)'"
+                },
+                choices: [
+                    {
+                        code: "A",
+                        title: "ทางเลือก A: ตรวจสอบอุปกรณ์และใช้งบซ่อมบำรุงด่วน",
+                        desc: "จ่ายงบประมาณ 20 คะแนน อนุมัติช่างเข้ามาซ่อมคอมพิวเตอร์ 5 เครื่องทันที",
+                        cost: 20,
+                        timeCost: 0,
+                        compCost: -5, // Effect handled in JS (repairs it back)
+                        story: "ช่างสามารถซ่อมแซมคอมพิวเตอร์ทั้ง 5 เครื่องกลับมาใช้งานได้สมบูรณ์!",
+                        concept: "การฟื้นฟูระบบเมื่อเกิดข้อผิดพลาด (Error Recovery & Maintenance)"
+                    },
+                    {
+                        code: "B",
+                        title: "ทางเลือก B: ปรับไปใช้ใบงานหรือการจำลองผังงานเป็นแผนสำรอง",
+                        desc: "ไม่ใช้เงินซ่อม แต่ปรับใบกิจกรรมการเรียนรู้แบบไม่ต้องใช้คอมพิวเตอร์",
+                        cost: 0,
+                        timeCost: 0,
+                        compCost: 5, // Comp stays reduced
+                        story: "ประหยัดงบประมาณได้ดี นำการจำลองผังงานมาใช้อย่างเป็นระบบ แต่จำนวนคอมฯ ที่ใช้ได้จะลดลงเหลือ 15 เครื่อง",
+                        concept: "การใช้อัลกอริทึมยืดหยุ่นรองรับสถานการณ์บกพร่อง (Fault-Tolerant Algorithm)"
+                    },
+                    {
+                        code: "C",
+                        title: "ทางเลือก C: ดำเนินกิจกรรมต่อโดยยังไม่ตรวจสอบสาเหตุ",
+                        desc: "ปล่อยเครื่องเสียไว้ แล้วให้นักเรียนมุงดูเพื่อนทำ",
+                        cost: 0,
+                        timeCost: 1,
+                        compCost: 5,
+                        story: "ทำให้อุปกรณ์ชิ้นอื่นเสี่ยงชำรุดเพิ่ม และเสียเวลาเรียนรู้อย่างมากไป 1 วัน!",
+                        concept: "ผลกระทบจากการไม่ตรวจสอบเงื่อนไขความผิดพลาด (Unhandled Exception)"
+                    }
+                ]
+            },
+
+            /* MISSION 4 */
+            {
+                id: 4,
+                title: "ตรวจสอบแผนก่อนดำเนินการจริง",
+                icon: "fa-clipboard-check",
+                iconBg: "bg-emerald-100 text-emerald-600",
+                description: "ภารกิจสุดท้ายก่อนประเมินโรงเรียนอัจฉริยะ! คุณต้องนำแผนอัลกอริทึมการบริหารทั้งหมดไปทดสอบ (Testing & Debugging) เพื่อให้มั่นใจว่าไม่มีข้อผิดพลาด",
+                getDynamicData: function(state) {
+                    return [
+                        "งบประมาณเหลือ: " + state.resources.budget + " คะแนน",
+                        "คอมพิวเตอร์พร้อมใช้: " + state.resources.computers + " เครื่อง",
+                        "สถานะระบบ: พร้อมทดสอบขั้นตอนสุดท้าย"
+                    ];
+                },
+                minigame: {
+                    type: "debug_logic",
+                    title: "การตรวจสอบและแก้ไขข้อผิดพลาด (Debugging)",
+                    instruction: "การทดสอบขั้นตอนวิธี (Algorithm Testing) มีจุดประสงค์หลักคืออะไร?",
+                    options: [
+                        "เพื่อค้นหาและแก้ไขข้อผิดพลาด (Bug) ก่อนนำไปใช้งานจริง",
+                        "เพื่อทำให้โปรแกรมทำงานช้าลง",
+                        "เพื่อเพิ่มจำนวนบรรทัดของผังงานให้ยาวขึ้น"
+                    ],
+                    correctIndex: 0,
+                    explanation: "การ Debugging ช่วยให้เราพบข้อผิดพลาดของลำดับขั้นตอนหรือเงื่อนไขก่อนนำไปใช้ในสถานการณ์จริง"
+                },
+                choices: [
+                    {
+                        code: "A",
+                        title: "ทางเลือก A: ทดสอบทุกขั้นตอนตามผังงานอย่างละเอียด (Full Testing)",
+                        desc: "ใช้งบประมาณ 10 คะแนน และตรวจสอบเงื่อนไขทุกจุด",
+                        cost: 10,
+                        timeCost: 0,
+                        compCost: 0,
+                        story: "การทดสอบอย่างสมบูรณ์แบบทำให้พบจุดบกพร่องและแก้ไขได้ทันที 100% โรงเรียนได้รับคำชมเชยอย่างสูง!",
+                        concept: "การทดสอบระบบอย่างครอบคลุมทุกกรณี (Exhaustive Testing & Debugging)"
+                    },
+                    {
+                        code: "B",
+                        title: "ทางเลือก B: ตรวจสอบเฉพาะเงื่อนไขสำคัญ (Selective Testing)",
+                        desc: "ตรวจสอบเฉพาะจุดที่เสี่ยงเกิดปัญหา ไม่เสียค่าใช้จ่าย",
+                        cost: 0,
+                        timeCost: 0,
+                        compCost: 0,
+                        story: "ประหยัดงบและเวลาได้ดี ระบบทำงานได้ราบรื่น ปลอดภัยในระดับมาตรฐาน!",
+                        concept: "การทดสอบเฉพาะกรณีขอบเขตสำคัญ (Boundary Condition Testing)"
+                    },
+                    {
+                        code: "C",
+                        title: "ทางเลือก C: ดำเนินการทันทีโดยไม่ทดสอบแผนก่อน",
+                        desc: "เปิดใช้งานระบบทันทีเพื่อความรวดเร็ว",
+                        cost: 0,
+                        timeCost: 1,
+                        compCost: 0,
+                        story: "เกิดข้อผิดพลาดไม่คาดคิดระหว่างการประเมิน ทำให้เสียเวลาแก้ไขหน้างานกะทันหัน!",
+                        concept: "ความเสี่ยงจากการข้ามขั้นตอนการทดสอบ (Risk of Skipping Test Phase)"
+                    }
+                ]
+            }
+        ];
+
+        /* ================= GAME ENGINE FUNCTIONS ================= */
+
+        // Start Game Init
+        function startGame() {
+            gameState = JSON.parse(JSON.stringify(initialGameState));
+            document.getElementById("page-start").classList.add("hidden");
+            document.getElementById("game-header").classList.remove("hidden");
+            showMissionScenario(0);
+        }
+
+        // Modal Handlers
+        function openHowToModal() {
+            document.getElementById("modal-howto").classList.remove("hidden");
+        }
+        function closeHowToModal() {
+            document.getElementById("modal-howto").classList.add("hidden");
+        }
+
+        // Update UI Top Dashboard Header
+        function updateHeaderUI() {
+            document.getElementById("res-budget").textContent = gameState.resources.budget;
+            document.getElementById("res-days").textContent = gameState.resources.days;
+            document.getElementById("res-computers").textContent = gameState.resources.computers;
+            document.getElementById("res-students").textContent = gameState.resources.students;
+
+            document.getElementById("current-day-badge").textContent = `วันที ${5 - gameState.resources.days} / 4`;
+            
+            if (gameState.currentMissionIndex < missionsData.length) {
+                document.getElementById("current-mission-title").textContent = 
+                    `ภารกิจที่ ${gameState.currentMissionIndex + 1}: ${missionsData[gameState.currentMissionIndex].title}`;
+            }
+        }
+
+        // Show Page 2: Mission Scenario
+        function showMissionScenario(missionIdx) {
+            gameState.currentMissionIndex = missionIdx;
+            gameState.minigameCompleted = false;
+            gameState.selectedChoiceIndex = null;
+            updateHeaderUI();
+
+            const mission = missionsData[missionIdx];
+
+            // Render Info
+            document.getElementById("mission-step-tag").textContent = `ภารกิจที่ ${missionIdx + 1} จาก 4`;
+            document.getElementById("mission-title").textContent = mission.title;
+            document.getElementById("mission-description").textContent = mission.description;
+
+            // Mission Icon
+            const iconBg = document.getElementById("mission-icon-bg");
+            iconBg.className = `w-12 h-12 rounded-2xl flex items-center justify-center text-2xl font-bold ${mission.iconBg}`;
+            document.getElementById("mission-icon").className = `fa-solid ${mission.icon}`;
+
+            // Render Dynamic Data Points
+            const dataListContainer = document.getElementById("mission-data-list");
+            dataListContainer.innerHTML = "";
+            const dataPoints = mission.getDynamicData ? mission.getDynamicData(gameState) : mission.dataPoints;
+            
+            dataPoints.forEach(dp => {
+                const item = document.createElement("div");
+                item.className = "flex items-center gap-2 bg-white p-2 rounded-xl border border-amber-100";
+                item.innerHTML = `<i class="fa-solid fa-circle-dot text-amber-500 text-xs"></i> <span>${dp}</span>`;
+                dataListContainer.appendChild(item);
+            });
+
+            // Switch Screen
+            hideAllPages();
+            document.getElementById("page-scenario").classList.remove("hidden");
+        }
+
+        // Go from Scenario Page -> Decision & MiniGame Page
+        function goToDecisionPage() {
+            const mission = missionsData[gameState.currentMissionIndex];
+            
+            // Setup Mini-Game Card
+            setupMiniGame(mission.minigame);
+            
+            // Setup Management Decision Choices
+            setupChoices(mission.choices);
+
+            // Update score badge display
+            const totalScore = gameState.scores.algorithm + gameState.scores.flowchart + gameState.scores.condition;
+            document.getElementById("current-score-display").textContent = totalScore;
+
+            hideAllPages();
+            document.getElementById("page-decision").classList.remove("hidden");
+        }
+
+        /* Setup Learning Mini-Game UI */
+        function setupMiniGame(mg) {
+            const container = document.getElementById("minigame-question-container");
+            const feedbackBox = document.getElementById("minigame-feedback");
+            feedbackBox.classList.add("hidden");
+            document.getElementById("minigame-title").textContent = mg.title;
+
+            if (mg.type === "order") {
+                // Interactive Drag/Click to order
+                let userOrder = [];
+                container.innerHTML = `
+                    <p class="text-xs md:text-sm text-slate-600">${mg.instruction}</p>
+                    <div id="order-items" class="space-y-2 my-3">
+                        ${mg.items.map(item => `
+                            <button onclick="handleOrderClick(${item.id})" id="order-btn-${item.id}" class="w-full text-left p-3 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-sky-50 transition flex items-center justify-between text-xs md:text-sm">
+                                <span><i class="fa-solid fa-grip-lines text-slate-400 mr-2"></i> ${item.text}</span>
+                                <span id="order-badge-${item.id}" class="w-6 h-6 rounded-full bg-slate-200 text-slate-600 text-xs flex items-center justify-center font-bold">?</span>
+                            </button>
+                        `).join('')}
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="checkOrderAnswer()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-5 py-2 rounded-xl text-xs md:text-sm">
+                            ตรวจคำตอบลำดับ
+                        </button>
+                        <button onclick="resetOrderAnswer()" class="bg-slate-200 text-slate-700 font-bold px-4 py-2 rounded-xl text-xs md:text-sm">
+                            ลบเรียงใหม่
+                        </button>
+                    </div>
+                `;
+                window.currentMinigameOrder = [];
+            } else if (mg.type === "flowchart_read" || mg.type === "condition_if" || mg.type === "debug_logic") {
+                let extraHtml = "";
+                if (mg.flowchartDiagram) extraHtml = `<div class="bg-slate-50 p-3 rounded-2xl border border-slate-200 my-2">${mg.flowchartDiagram}</div>`;
+                if (mg.codeSnippet) extraHtml = `<div class="bg-slate-900 text-emerald-400 font-mono text-xs p-4 rounded-2xl my-2 leading-relaxed">${mg.codeSnippet}</div>`;
+
+                container.innerHTML = `
+                    <p class="text-xs md:text-sm text-slate-600">${mg.instruction}</p>
+                    ${extraHtml}
+                    <p class="font-bold text-slate-800 text-xs md:text-sm mt-3">${mg.question}</p>
+                    <div class="space-y-2 mt-2">
+                        ${mg.options.map((opt, idx) => `
+                            <button onclick="checkMultipleChoiceAnswer(${idx})" class="mc-option-btn w-full text-left p-3 rounded-2xl border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50 transition text-xs md:text-sm">
+                                <span class="font-bold mr-1">${String.fromCharCode(65 + idx)}.</span> ${opt}
+                            </button>
+                        `).join('')}
+                    </div>
+                `;
+            }
+        }
+
+        // Minigame Helper: Order Click
+        function handleOrderClick(itemId) {
+            if (gameState.minigameCompleted) return;
+            if (!window.currentMinigameOrder) window.currentMinigameOrder = [];
+            
+            const existingIdx = window.currentMinigameOrder.indexOf(itemId);
+            if (existingIdx === -1) {
+                window.currentMinigameOrder.push(itemId);
+                const badge = document.getElementById(`order-badge-${itemId}`);
+                badge.textContent = window.currentMinigameOrder.length;
+                badge.className = "w-6 h-6 rounded-full bg-indigo-600 text-white text-xs flex items-center justify-center font-bold";
+            }
+        }
+
+        function resetOrderAnswer() {
+            if (gameState.minigameCompleted) return;
+            window.currentMinigameOrder = [];
+            missionsData[0].minigame.items.forEach(item => {
+                const badge = document.getElementById(`order-badge-${item.id}`);
+                if (badge) {
+                    badge.textContent = "?";
+                    badge.className = "w-6 h-6 rounded-full bg-slate-200 text-slate-600 text-xs flex items-center justify-center font-bold";
+                }
+            });
+            const fb = document.getElementById("minigame-feedback");
+            fb.classList.add("hidden");
+        }
+
+        function checkOrderAnswer() {
+            if (gameState.minigameCompleted) return;
+            const mg = missionsData[0].minigame;
+            const userAns = window.currentMinigameOrder || [];
+            const fb = document.getElementById("minigame-feedback");
+
+            if (userAns.length < 3) {
+                fb.className = "p-4 rounded-2xl text-xs md:text-sm font-medium bg-amber-100 text-amber-900 border border-amber-300";
+                fb.textContent = "คำใบ้: กรุณากดเลือกขั้นตอนให้ครบทั้ง 3 ขั้นตอนตามลำดับก่อนนะครับ";
+                fb.classList.remove("hidden");
+                return;
+            }
+
+            const isCorrect = JSON.stringify(userAns) === JSON.stringify(mg.correctOrder);
+            if (isCorrect) {
+                gameState.scores.algorithm = 25; // Award 25 pts
+                gameState.minigameCompleted = true;
+                fb.className = "p-4 rounded-2xl text-xs md:text-sm font-medium bg-emerald-100 text-emerald-900 border border-emerald-300";
+                fb.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i> <strong>ถูกต้อง! (+25 คะแนน)</strong> ${mg.explanation}`;
+            } else {
+                fb.className = "p-4 rounded-2xl text-xs md:text-sm font-medium bg-rose-100 text-rose-900 border border-rose-300";
+                fb.innerHTML = `<i class="fa-solid fa-circle-xmark text-rose-600 mr-1"></i> <strong>ยังไม่ถูกต้อง!</strong> คำใบ้: ลองพิจารณาว่าเราควร "วิเคราะห์ข้อมูล" ก่อนเริ่มทำกิจกรรมใช่หรือไม่? กด 'ลบเรียงใหม่' เพื่อลองอีกครั้ง`;
+            }
+            fb.classList.remove("hidden");
+            document.getElementById("current-score-display").textContent = 
+                gameState.scores.algorithm + gameState.scores.flowchart + gameState.scores.condition;
+        }
+
+        function checkMultipleChoiceAnswer(selectedIdx) {
+            if (gameState.minigameCompleted) return;
+            const mission = missionsData[gameState.currentMissionIndex];
+            const mg = mission.minigame;
+            const fb = document.getElementById("minigame-feedback");
+            const isCorrect = selectedIdx === mg.correctIndex;
+
+            if (isCorrect) {
+                gameState.minigameCompleted = true;
+                // Assign score categories based on mission
+                if (gameState.currentMissionIndex === 1) gameState.scores.flowchart = 25;
+                else if (gameState.currentMissionIndex === 2) gameState.scores.condition += 15;
+                else if (gameState.currentMissionIndex === 3) gameState.scores.condition += 15;
+
+                fb.className = "p-4 rounded-2xl text-xs md:text-sm font-medium bg-emerald-100 text-emerald-900 border border-emerald-300";
+                fb.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i> <strong>เก่งมาก คำตอบถูกต้อง!</strong> ${mg.explanation}`;
+            } else {
+                fb.className = "p-4 rounded-2xl text-xs md:text-sm font-medium bg-rose-100 text-rose-900 border border-rose-300";
+                fb.innerHTML = `<i class="fa-solid fa-circle-xmark text-rose-600 mr-1"></i> <strong>ยังไม่ถูกต้องครับ!</strong> คำใบ้: ลองอ่านคำถามและสัญลักษณ์ใหม่อีกครั้ง แล้วเลือกทางเลือกอื่นดูนะ`;
+            }
+            fb.classList.remove("hidden");
+            document.getElementById("current-score-display").textContent = 
+                gameState.scores.algorithm + gameState.scores.flowchart + gameState.scores.condition;
+        }
+
+        /* Setup Management Decisions Choices UI */
+        function setupChoices(choices) {
+            const container = document.getElementById("choices-container");
+            container.innerHTML = "";
+            const confirmBtn = document.getElementById("btn-confirm-choice");
+            confirmBtn.disabled = true;
+            confirmBtn.className = "bg-slate-300 text-slate-50 cursor-not-allowed heading-font font-bold text-base px-8 py-3.5 rounded-2xl transition-all flex items-center gap-2";
+
+            choices.forEach((c, idx) => {
+                const card = document.createElement("div");
+                card.id = `choice-card-${idx}`;
+                card.onclick = () => selectChoice(idx);
+                card.className = "choice-card bg-slate-50 border-2 border-slate-200 rounded-2xl p-4 cursor-pointer transition-all hover:bg-sky-50/50 flex flex-col justify-between space-y-2";
+                
+                card.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <h4 class="font-bold text-slate-800 text-sm md:text-base">${c.title}</h4>
+                        <span class="w-6 h-6 rounded-full border-2 border-slate-300 flex items-center justify-center text-xs font-bold text-slate-400 choice-radio">
+                            ${c.code}
+                        </span>
+                    </div>
+                    <p class="text-xs md:text-sm text-slate-600">${c.desc}</p>
+                    <div class="flex items-center gap-3 pt-2 text-xs font-medium text-slate-500 border-t border-slate-200/60">
+                        <span><i class="fa-solid fa-coins text-amber-500"></i> งบประมาณ: -${c.cost}</span>
+                        <span><i class="fa-solid fa-clock text-blue-500"></i> เวลา: -${c.timeCost} วัน</span>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function selectChoice(idx) {
+            gameState.selectedChoiceIndex = idx;
+            const choices = missionsData[gameState.currentMissionIndex].choices;
+
+            choices.forEach((_, i) => {
+                const card = document.getElementById(`choice-card-${i}`);
+                if (i === idx) {
+                    card.classList.add("selected");
+                    card.querySelector(".choice-radio").className = "w-6 h-6 rounded-full bg-sky-600 text-white flex items-center justify-center text-xs font-bold choice-radio";
+                } else {
+                    card.classList.remove("selected");
+                    card.querySelector(".choice-radio").className = "w-6 h-6 rounded-full border-2 border-slate-300 flex items-center justify-center text-xs font-bold text-slate-400 choice-radio";
+                }
+            });
+
+            // Enable Confirm Button
+            const confirmBtn = document.getElementById("btn-confirm-choice");
+            confirmBtn.disabled = false;
+            confirmBtn.className = "bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white heading-font font-bold text-base px-8 py-3.5 rounded-2xl shadow-lg shadow-emerald-600/30 transition-all flex items-center gap-2 cursor-pointer";
+        }
+
+        /* Confirm Management Decision & Execute Branching Logic */
+        function confirmDecision() {
+            if (gameState.selectedChoiceIndex === null) return;
+
+            const mission = missionsData[gameState.currentMissionIndex];
+            const choice = mission.choices[gameState.selectedChoiceIndex];
+
+            // Record Choice Code
+            gameState.choicesHistory.push(choice.code);
+
+            // Calculate Resource Changes
+            gameState.resources.budget = Math.max(0, gameState.resources.budget - choice.cost);
+            gameState.resources.days = Math.max(0, gameState.resources.days - choice.timeCost);
+
+            // Mission 3 Special Repair Logic
+            if (mission.id === 3) {
+                if (choice.code === 'A') {
+                    // Repaired successfully
+                    gameState.resources.computers = 20;
+                } else {
+                    // Damaged permanently by 5
+                    gameState.resources.computers = 15;
+                }
+            }
+
+            // Update UI Header
+            updateHeaderUI();
+
+            // Render Result & Feedback Page
+            renderFeedbackPage(choice);
+        }
+
+        /* Show Page 4: Result & Feedback */
+        function renderFeedbackPage(choice) {
+            document.getElementById("result-title").textContent = "ดำเนินการตามแผน: " + choice.title;
+            document.getElementById("result-story-text").textContent = choice.story;
+            document.getElementById("educational-concept-text").textContent = choice.concept;
+
+            // Render Resource Changes List
+            const resContainer = document.getElementById("resource-changes-list");
+            resContainer.innerHTML = `
+                <div class="bg-white p-2 rounded-xl border border-sky-100">
+                    <span class="text-[10px] text-slate-400 block">งบประมาณ</span>
+                    <span class="font-bold text-amber-600 text-sm">-${choice.cost}</span>
+                </div>
+                <div class="bg-white p-2 rounded-xl border border-sky-100">
+                    <span class="text-[10px] text-slate-400 block">เวลาที่ใช้</span>
+                    <span class="font-bold text-blue-600 text-sm">-${choice.timeCost} วัน</span>
+                </div>
+                <div class="bg-white p-2 rounded-xl border border-sky-100">
+                    <span class="text-[10px] text-slate-400 block">คอมพิวเตอร์คงเหลือ</span>
+                    <span class="font-bold text-emerald-600 text-sm">${gameState.resources.computers} เครื่อง</span>
+                </div>
+                <div class="bg-white p-2 rounded-xl border border-sky-100">
+                    <span class="text-[10px] text-slate-400 block">นักเรียน</span>
+                    <span class="font-bold text-purple-600 text-sm">30 คน</span>
+                </div>
+            `;
+
+            // Update button label depending on if last mission
+            const btnNextText = document.getElementById("btn-next-text");
+            if (gameState.currentMissionIndex >= missionsData.length - 1) {
+                btnNextText.textContent = "ดูสรุปผลงานและการเรียนรู้";
+            } else {
+                btnNextText.textContent = "ไปภารกิจถัดไป";
+            }
+
+            hideAllPages();
+            document.getElementById("page-feedback").classList.remove("hidden");
+        }
+
+        /* Progress to Next Mission or Final Summary */
+        function nextMission() {
+            if (gameState.currentMissionIndex < missionsData.length - 1) {
+                showMissionScenario(gameState.currentMissionIndex + 1);
+            } else {
+                showSummaryPage();
+            }
+        }
+
+        /* Show Page 5: Summary & Reflection */
+        function showSummaryPage() {
+            hideAllPages();
+            document.getElementById("game-header").classList.add("hidden"); // Hide mini header in summary
+            document.getElementById("page-summary").classList.remove("hidden");
+
+            // Calculate Learning Score
+            const totalLearningScore = gameState.scores.algorithm + 
+                                       gameState.scores.flowchart + 
+                                       gameState.scores.condition + 
+                                       gameState.scores.reflection;
+
+            document.getElementById("final-learning-score").textContent = totalLearningScore;
+            document.getElementById("score-part-1").textContent = `${gameState.scores.algorithm} / 25`;
+            document.getElementById("score-part-2").textContent = `${gameState.scores.flowchart} / 25`;
+            document.getElementById("score-part-3").textContent = `${gameState.scores.condition} / 30`;
+            document.getElementById("score-part-4").textContent = `${gameState.scores.reflection} / 20`;
+
+            // Render Final Resources
+            document.getElementById("final-res-budget").textContent = gameState.resources.budget;
+            document.getElementById("final-res-computers").textContent = `${gameState.resources.computers}/20`;
+            document.getElementById("final-res-students").textContent = `${gameState.resources.students} คน`;
+            document.getElementById("final-res-days").textContent = `${4 - gameState.resources.days} วันที่ใช้`;
+
+            // Style Evaluation based on user performance
+            const evalText = document.getElementById("final-style-text");
+            if (gameState.resources.budget >= 60 && totalLearningScore >= 70) {
+                evalText.textContent = "นักบริหารจัดการโรงเรียนอัจฉริยะระดับผู้เชี่ยวชาญ (Smart & Economical Leader)";
+            } else if (totalLearningScore >= 60) {
+                evalText.textContent = "ผู้จัดการสายวิเคราะห์อัลกอริทึม (Logical Problem Solver)";
+            } else {
+                evalText.textContent = "ผู้จัดการนักแก้ปัญหาเฉพาะหน้า (Adaptive School Manager)";
+            }
+        }
+
+        /* Submit Reflection Answers (+20 points) */
+        function submitReflection() {
+            if (gameState.reflectionSubmitted) return;
+
+            const q1 = document.getElementById("ref-q1").value.trim();
+            const q2 = document.getElementById("ref-q2").value.trim();
+            const q3 = document.getElementById("ref-q3").value.trim();
+            const q4 = document.getElementById("ref-q4").value.trim();
+            const q5 = document.getElementById("ref-q5").value.trim();
+
+            if (!q1 || !q2 || !q3 || !q4 || !q5) {
+                alert("กรุณาพิมพ์ตอบคำถามสะท้อนคิดให้ครบทั้ง 5 ข้อ เพื่อรับคะแนนเต็ม 20 คะแนนนะครับ");
+                return;
+            }
+
+            gameState.scores.reflection = 20; // Award full 20 pts
+            gameState.reflectionSubmitted = true;
+
+            // Recalculate total
+            const totalLearningScore = gameState.scores.algorithm + 
+                                       gameState.scores.flowchart + 
+                                       gameState.scores.condition + 
+                                       gameState.scores.reflection;
+
+            document.getElementById("final-learning-score").textContent = totalLearningScore;
+            document.getElementById("score-part-4").textContent = `20 / 20`;
+
+            document.getElementById("btn-submit-reflection").classList.add("hidden");
+            document.getElementById("reflection-submitted-msg").classList.remove("hidden");
+
+            // Disable textareas
+            ["ref-q1", "ref-q2", "ref-q3", "ref-q4", "ref-q5"].forEach(id => {
+                document.getElementById(id).disabled = true;
+                document.getElementById(id).classList.add("bg-slate-100");
+            });
+        }
+
+        /* Restart Game Completely */
+        function restartGame() {
+            gameState = JSON.parse(JSON.stringify(initialGameState));
+            
+            // Reset Reflection Form
+            document.getElementById("btn-submit-reflection").classList.remove("hidden");
+            document.getElementById("reflection-submitted-msg").classList.add("hidden");
+            ["ref-q1", "ref-q2", "ref-q3", "ref-q4", "ref-q5"].forEach(id => {
+                const el = document.getElementById(id);
+                el.value = "";
+                el.disabled = false;
+                el.classList.remove("bg-slate-100");
+            });
+
+            hideAllPages();
+            document.getElementById("page-start").classList.remove("hidden");
+        }
+
+        /* Helper Utility to Hide All Pages */
+        function hideAllPages() {
+            document.getElementById("page-start").classList.add("hidden");
+            document.getElementById("page-scenario").classList.add("hidden");
+            document.getElementById("page-decision").classList.add("hidden");
+            document.getElementById("page-feedback").classList.add("hidden");
+            document.getElementById("page-summary").classList.add("hidden");
+        }
+    </script>
+</body>
+</html>
